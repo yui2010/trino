@@ -15,6 +15,7 @@ package io.trino.operator.join.spilling;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Ints;
+import com.google.common.annotations.VisibleForTesting;
 import io.trino.operator.HashGenerator;
 import io.trino.operator.JoinOperatorType;
 import io.trino.operator.NullSafeHashCompiler;
@@ -37,6 +38,7 @@ import io.trino.sql.planner.plan.PlanNodeId;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -176,7 +178,7 @@ public class LookupJoinOperatorFactory
                 lookupSourceFactory,
                 joinProbeFactory,
                 joinBridgeManager::probeOperatorClosed,
-                totalOperatorsCount,
+                totalOperatorsCount.get(),
                 probeHashGenerator,
                 partitioningSpillerFactory,
                 processorContext,
