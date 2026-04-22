@@ -59,7 +59,7 @@ public class LookupJoinOperatorFactory
     private final JoinProbeFactory joinProbeFactory;
     private final Optional<OperatorFactory> outerOperatorFactory;
     private final JoinBridgeManager<? extends LookupSourceFactory> joinBridgeManager;
-    private final OptionalInt totalOperatorsCount;
+    private final AtomicReference<OptionalInt> totalOperatorsCount;
     private final HashGenerator probeHashGenerator;
     private final PartitioningSpillerFactory partitioningSpillerFactory;
 
@@ -102,7 +102,7 @@ public class LookupJoinOperatorFactory
                     buildOutputTypes,
                     lookupSourceFactoryManager));
         }
-        this.totalOperatorsCount = requireNonNull(totalOperatorsCount, "totalOperatorsCount is null");
+        this.totalOperatorsCount = new AtomicReference<>(requireNonNull(totalOperatorsCount, "totalOperatorsCount is null"));
 
         requireNonNull(probeJoinChannels, "probeJoinChannels is null");
         List<Type> hashTypes = probeJoinChannels.stream()
@@ -195,5 +195,17 @@ public class LookupJoinOperatorFactory
     public LookupJoinOperatorFactory duplicate()
     {
         return new LookupJoinOperatorFactory(this);
+    }
+
+    public void incrementTotalOperatorsCount()
+    {
+        totalOperatorsCount.updateAndGet(current ->
+                current.isPresent() ? OptionalInt.of(current.getAsInt() + 1) : current);
+    }
+    
+    @VisibleForTesting
+    public OptionalInt getTotalOperatorsCount()
+    {
+        return totalOperatorsCount.get();
     }
 }
